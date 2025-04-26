@@ -1,6 +1,8 @@
 -- full Snowflake session setup script
 -- Set your role (adjust based on what you have access to)
 USE ROLE SYSADMIN;
+--or
+USE ROLE ACCOUNTADMIN;
 
 -- Set your virtual warehouse (compute power)
 USE WAREHOUSE COMPUTE_WH;
