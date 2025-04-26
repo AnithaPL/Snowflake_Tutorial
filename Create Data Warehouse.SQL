@@ -1,0 +1,14 @@
+--Create Data Warehouse
+-- Drop WH if exist
+DROP WAREHOUSE "MYTESTWH_SHABBY";
+
+-- Create Warehouse using SQL CREATE Command
+CREATE WAREHOUSE SHABBY_TEST_WH 
+WITH WAREHOUSE_SIZE = 'XSMALL' 
+WAREHOUSE_TYPE = 'STANDARD' 
+AUTO_SUSPEND = 300 
+AUTO_RESUME = TRUE 
+MIN_CLUSTER_COUNT = 1 
+MAX_CLUSTER_COUNT = 3 
+SCALING_POLICY = 'STANDARD' 
+COMMENT = 'This is my first test warehouse in Snowflake';
