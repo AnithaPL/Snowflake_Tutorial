@@ -1,1 +1,1 @@
-# Snowflake_Tutorial
+# SNOWFLAKE_TUTORIAL
