@@ -1,4 +1,4 @@
--- CSV file from ORACLE
+-- CSV files from ORACLE
 -- SELECT * FROM EMPLOYEES;
 -- SELECT * FROM DEPARTMENTS;
 
@@ -54,8 +54,13 @@ ON
 -- retrieves all columns and all rows from the EMP_DEPART_COMBO table or view.
 SELECT * FROM EMP_DEPART_COMBO ;
 
+-- Use SQL directly (no OPEN/FETCH) Displayed 5 rows 1 columns 5 cells
+-- SELECT FIRST_NAME || ' ' || LAST_NAME AS FULL_NAME FROM EMP_DEPART_COMBO WHERE LOCATION_ID = 1400;
+
+-- Displayed 5 rows 14 columns 70 cells
 -- SELECT * FROM EMP_DEPART_COMBO  WHERE LOCATION_ID = 1400;
 
+========================================================================================================================================================
 
 -- OPEN/FETCH - PRINT FIRST_NAME IN THE LOCATION_ID 1400
 DECLARE
@@ -73,6 +78,8 @@ BEGIN
     RETURN FN_NAME; -- You may need to place this inside a stored procedure.
     CLOSE cur1;
 END;
+
+========================================================================================================================================================
 
 -- OPEN/FETCH - PRINT LAST_NAME IN THE LOCATION_ID 1400
 DECLARE
@@ -92,6 +99,8 @@ BEGIN
     CLOSE cur1;
 END;
 
+========================================================================================================================================================
+
 -- OPEN/FETCH - PRINT FIRST_NAME AND LAST_NAME IN THE LOCATION_ID 1400
 DECLARE
     cur1 CURSOR FOR
@@ -109,8 +118,7 @@ BEGIN
     CLOSE cur1;
 END;
 
---Use SQL directly (no OPEN/FETCH)
-SELECT FIRST_NAME || ' ' || LAST_NAME AS FULL_NAME FROM EMP_DEPART_COMBO WHERE LOCATION_ID = 1400;
+========================================================================================================================================================
 
 -- OPEN/FETCH - PRINT FIRST_NAME AND LAST_NAME OF ALL EMPLOYEES WHO ARE ALL WORKING IN THE LOCATION_ID 1400
 DECLARE
@@ -131,7 +139,7 @@ BEGIN
         END IF;
        
        IF (LV_RESULT != '' )THEN
-            LV_RESULT := LV_RESULT || ', ';
+            LV_RESULT := LV_RESULT || ', ' || CHR(10); -- Add comma and newline
         END IF;
 
         LV_RESULT := LV_RESULT || FN_NAME || ' ' || LN_NAME;
@@ -140,6 +148,8 @@ BEGIN
     CLOSE cur1;
     RETURN LV_RESULT;
 END;
+
+========================================================================================================================================================
 
 -- FOR LOOP - PRINT FIRST_NAME IN THE LOCATION_ID 1400
 DECLARE
@@ -153,6 +163,8 @@ BEGIN
     END LOOP;
 END;
 
+========================================================================================================================================================
+
 -- FOR LOOP - PRINT LAST_NAME IN THE LOCATION_ID 1400
 DECLARE
     cur1 CURSOR FOR
@@ -164,6 +176,8 @@ BEGIN
         RETURN I.LAST_NAME; -- Only return LAST_NAME for each row, stops after the first row
     END LOOP;
 END;
+
+========================================================================================================================================================
 
 -- FOR LOOP - PRINT FIRST_NAME AND LAST_NAME IN THE LOCATION_ID 1400
 DECLARE
@@ -178,6 +192,8 @@ BEGIN
     END LOOP;
 END;
 
+========================================================================================================================================================
+
 -- FOR LOOP - PRINT FIRST_NAME AND LAST_NAME OF ALL EMPLOYEES WHO ARE ALL WORKING IN THE LOCATION_ID 1400
 DECLARE
     LV_RESULT STRING DEFAULT '';  -- Variable to accumulate results
@@ -189,13 +205,12 @@ BEGIN
     FOR I IN cur1 LOOP
         -- If this is not the first iteration, add a comma before adding the next value
         IF( LV_RESULT != '') THEN
-          LV_RESULT := LV_RESULT || ', ';
+            LV_RESULT := LV_RESULT || ', ' || CHR(10);  -- Add comma and newline
         END IF;
 
         -- Accumulate FIRST_NAME and LAST_NAME
         LV_RESULT := LV_RESULT || I.FIRST_NAME || ' ' || I.LAST_NAME;
     END LOOP;
-
     -- Return the accumulated result after the loop finishes
     RETURN LV_RESULT;
 END;
