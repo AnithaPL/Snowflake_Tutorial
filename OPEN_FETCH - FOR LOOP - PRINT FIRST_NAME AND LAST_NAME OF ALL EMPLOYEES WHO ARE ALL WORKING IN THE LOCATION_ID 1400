@@ -1,5 +1,6 @@
-SELECT * FROM EMPLOYEES;
-SELECT * FROM DEPARTMENTS;
+-- CSV file from ORACLE
+-- SELECT * FROM EMPLOYEES;
+-- SELECT * FROM DEPARTMENTS;
 
 -- LEFT JOIN is used to include all employees even if some don't belong to a department.
 -- Aliases like E and D make the query cleaner.
