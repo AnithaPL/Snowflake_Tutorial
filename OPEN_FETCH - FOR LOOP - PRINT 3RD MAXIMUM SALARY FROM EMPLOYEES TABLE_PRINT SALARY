@@ -1,1 +1,89 @@
+-- CSV files from ORACLE
+-- SELECT * FROM EMPLOYEES;
+-- SELECT * FROM DEPARTMENTS;
 
+-- LEFT JOIN is used to include all employees even if some don't belong to a department.
+-- Aliases like E and D make the query cleaner.
+-- Renamed MANAGER_ID from both tables to avoid confusion. 
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- create a combined table in Snowflake from your two tables (EMPLOYEES and DEPARTMENTS), you can use the CREATE TABLE AS SELECT (CTAS) syntax
+CREATE OR REPLACE TABLE EMP_DEPART_COMBO AS
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+=========================================================================================================================================================
+-- retrieves all columns and all rows from the EMP_DEPART_COMBO table or view.
+SELECT * FROM EMP_DEPART_COMBO ;
+
+-- SELECT DISTINCT SALARY FROM EMP_DEPART_COMBO ORDER BY SALARY DESC OFFSET 2 ROWS FETCH NEXT 1 ROW ONLY
+
+-- OPEN/FETCH - PRINT 3RD MAXIMUM SALARY FROM EMPLOYEES TABLE (PRINT SALARY)
+DECLARE
+    C5 CURSOR FOR
+SELECT DISTINCT SALARY
+       FROM EMP_DEPART_COMBO
+        ORDER BY SALARY DESC
+        OFFSET 2 ROWS FETCH NEXT 1 ROW ONLY; 
+LV_SALARY NUMBER;
+BEGIN
+OPEN C5;
+FETCH C5 INTO LV_SALARY;
+CLOSE C5;
+RETURN LV_SALARY;
+END;
+
+=========================================================================================================================================================
+
+-- FOR LOOP - PRINT 3RD MAXIMUM SALARY FROM EMPLOYEES TABLE (PRINT SALARY)
+DECLARE
+    C5 CURSOR FOR
+SELECT DISTINCT SALARY
+        FROM EMP_DEPART_COMBO
+        ORDER BY SALARY DESC
+        OFFSET 2 ROWS FETCH NEXT 1 ROW ONLY; 
+    LV_SALARY NUMBER;
+BEGIN
+FOR I IN C5 LOOP
+LV_SALARY:= I.SALARY;
+RETURN LV_SALARY;
+END LOOP;
+END;
