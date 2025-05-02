@@ -1,1 +1,143 @@
+-- CSV files from ORACLE
+-- SELECT * FROM EMPLOYEES;
+-- SELECT * FROM DEPARTMENTS;
+
+-- LEFT JOIN is used to include all employees even if some don't belong to a department.
+-- Aliases like E and D make the query cleaner.
+-- Renamed MANAGER_ID from both tables to avoid confusion. 
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- create a combined table in Snowflake from your two tables (EMPLOYEES and DEPARTMENTS), you can use the CREATE TABLE AS SELECT (CTAS) syntax
+CREATE OR REPLACE TABLE EMP_DEPART_COMBO AS
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- retrieves all columns and all rows from the EMP_DEPART_COMBO table or view.
+SELECT * FROM EMP_DEPART_COMBO ;
+
+-- SELECT DEPARTMENT_NAME FROM EMP_DEPART_COMBO GROUP BY DEPARTMENT_NAME HAVING COUNT(*) > 5; -- Displayed 4 rows 1 column 4 cells
+
+-- 4 rows 1 column 4 cells
+ -- SELECT DEPARTMENT_NAME
+ --        FROM EMP_DEPART_COMBO
+ --        GROUP BY DEPARTMENT_NAME
+ --        HAVING COUNT(*) > 5;
+
+============================================================================================================================================================
+
+-- OPEN/FETCH - PRINT DEPARTMENT_NAME (First Dept Name) WHICH ARE HAVING MORE THAN 5 EMPLOYEES
+DECLARE
+    cur2 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) > 5;
+    LV_DEPT_NAME VARCHAR;
+BEGIN
+    OPEN cur2;
+    FETCH cur2 INTO LV_DEPT_NAME;
+    CLOSE cur2;
+    RETURN LV_DEPT_NAME;
+END;
+
+============================================================================================================================================================
+
+-- OPEN/FETCH - PRINT DEPARTMENT_NAME (All) WHICH ARE HAVING MORE THAN 5 EMPLOYEES
+DECLARE
+    cur2 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) > 5;
+    LV_DEPT_NAME VARCHAR;
+    LV_RESULT VARCHAR DEFAULT '';
+BEGIN
+    OPEN cur2;
+    WHILE (TRUE) DO
+        FETCH cur2 INTO LV_DEPT_NAME;
+        IF (LV_DEPT_NAME IS NULL) THEN
+            EXIT;
+        END IF;
+        IF (LV_RESULT != '') THEN
+            LV_RESULT := LV_RESULT || ', ' || CHR(10);  -- Add comma and newline;
+        END IF;
+        LV_RESULT := LV_RESULT || LV_DEPT_NAME;
+    END WHILE;
+    CLOSE cur2;
+    RETURN LV_RESULT;
+END;
+
+============================================================================================================================================================
+
+-- FOR LOOP - PRINT DEPARTMENT_NAME (First Dept Name) WHICH ARE HAVING MORE THAN 5 EMPLOYEES
+DECLARE
+    cur2 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) > 5;
+BEGIN
+    FOR I IN cur2 LOOP
+        RETURN I.DEPARTMENT_NAME;
+    END LOOP;
+END;
+
+============================================================================================================================================================
+
+-- FOR LOOP - PRINT DEPARTMENT_NAME (All) WHICH ARE HAVING MORE THAN 5 EMPLOYEES
+DECLARE
+    cur2 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO 
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) > 5;
+    LV_RESULT VARCHAR := '';
+BEGIN
+    FOR I IN cur2 LOOP
+        IF (LV_RESULT != '') THEN
+            LV_RESULT := LV_RESULT || ', ' || CHR(10);  -- Add comma and newline;;
+        END IF;
+        LV_RESULT := LV_RESULT || I.DEPARTMENT_NAME;
+    END LOOP;
+    RETURN LV_RESULT;
+END;
 
