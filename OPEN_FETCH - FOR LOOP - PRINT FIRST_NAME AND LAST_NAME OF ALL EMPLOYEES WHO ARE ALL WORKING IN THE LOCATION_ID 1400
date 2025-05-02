@@ -1,0 +1,200 @@
+SELECT * FROM EMPLOYEES;
+SELECT * FROM DEPARTMENTS;
+
+-- LEFT JOIN is used to include all employees even if some don't belong to a department.
+-- Aliases like E and D make the query cleaner.
+-- Renamed MANAGER_ID from both tables to avoid confusion. 
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- create a combined table in Snowflake from your two tables (EMPLOYEES and DEPARTMENTS), you can use the CREATE TABLE AS SELECT (CTAS) syntax
+CREATE OR REPLACE TABLE EMP_DEPART_COMBO AS
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- retrieves all columns and all rows from the EMP_DEPART_COMBO table or view.
+SELECT * FROM EMP_DEPART_COMBO ;
+
+-- SELECT * FROM EMP_DEPART_COMBO  WHERE LOCATION_ID = 1400;
+
+
+-- OPEN/FETCH - PRINT FIRST_NAME IN THE LOCATION_ID 1400
+DECLARE
+    cur1 CURSOR FOR
+        SELECT FIRST_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE LOCATION_ID = 1400;
+        FN_NAME VARCHAR;
+BEGIN
+    OPEN cur1;
+    -- Fetch the first record
+    FETCH cur1 INTO FN_NAME;
+    -- Display the fetched FIRST_NAME (use a result for output)
+    -- This could be used in a procedure or script environment.
+    RETURN FN_NAME; -- You may need to place this inside a stored procedure.
+    CLOSE cur1;
+END;
+
+-- OPEN/FETCH - PRINT LAST_NAME IN THE LOCATION_ID 1400
+DECLARE
+    cur1 CURSOR FOR
+        SELECT LAST_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE LOCATION_ID = 1400;
+        LN_NAME VARCHAR;
+BEGIN
+    OPEN cur1;
+    -- Fetch the first record
+    FETCH cur1 INTO LN_NAME; 
+    -- While there are more rows to fetch
+    -- Display the fetched LAST_NAME (you would typically print inside a loop in a real use case)
+    -- In this case, fetching only the first record for simplicity
+    RETURN LN_NAME; 
+    CLOSE cur1;
+END;
+
+-- OPEN/FETCH - PRINT FIRST_NAME AND LAST_NAME IN THE LOCATION_ID 1400
+DECLARE
+    cur1 CURSOR FOR
+        SELECT FIRST_NAME, LAST_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE LOCATION_ID = 1400;
+    FN_NAME VARCHAR;
+    LN_NAME VARCHAR;
+BEGIN
+    OPEN cur1;
+    -- Fetch the first record
+    FETCH cur1 INTO FN_NAME, LN_NAME; 
+    -- Return the fetched FIRST_NAME and LAST_NAME
+    RETURN FN_NAME || ' ' || LN_NAME;  
+    CLOSE cur1;
+END;
+
+--Use SQL directly (no OPEN/FETCH)
+SELECT FIRST_NAME || ' ' || LAST_NAME AS FULL_NAME FROM EMP_DEPART_COMBO WHERE LOCATION_ID = 1400;
+
+-- OPEN/FETCH - PRINT FIRST_NAME AND LAST_NAME OF ALL EMPLOYEES WHO ARE ALL WORKING IN THE LOCATION_ID 1400
+DECLARE
+    cur1 CURSOR FOR
+        SELECT FIRST_NAME, LAST_NAME
+        FROM EMP_DEPART_COMBO 
+        WHERE LOCATION_ID = 1400;
+    FN_NAME STRING;
+    LN_NAME STRING;
+    LV_RESULT STRING DEFAULT '';
+BEGIN
+    OPEN cur1;
+    WHILE (TRUE) DO
+        FETCH cur1 INTO FN_NAME, LN_NAME;
+        -- Exit condition: if cursor has no more rows,
+        -- assume both values are NULL (only works if actual NULLs never appear in real data)
+        IF (FN_NAME IS NULL AND LN_NAME IS NULL) THEN EXIT;
+        END IF;
+       
+       IF (LV_RESULT != '' )THEN
+            LV_RESULT := LV_RESULT || ', ';
+        END IF;
+
+        LV_RESULT := LV_RESULT || FN_NAME || ' ' || LN_NAME;
+    END WHILE;
+    
+    CLOSE cur1;
+    RETURN LV_RESULT;
+END;
+
+-- FOR LOOP - PRINT FIRST_NAME IN THE LOCATION_ID 1400
+DECLARE
+    cur1 CURSOR FOR
+        SELECT FIRST_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE LOCATION_ID = 1400;
+BEGIN
+    FOR I IN cur1 LOOP
+        RETURN I.FIRST_NAME; -- Only return FIRST_NAME for each row, stops after the first row
+    END LOOP;
+END;
+
+-- FOR LOOP - PRINT LAST_NAME IN THE LOCATION_ID 1400
+DECLARE
+    cur1 CURSOR FOR
+        SELECT LAST_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE LOCATION_ID = 1400;
+BEGIN
+    FOR I IN cur1 LOOP
+        RETURN I.LAST_NAME; -- Only return LAST_NAME for each row, stops after the first row
+    END LOOP;
+END;
+
+-- FOR LOOP - PRINT FIRST_NAME AND LAST_NAME IN THE LOCATION_ID 1400
+DECLARE
+    cur1 CURSOR FOR
+        SELECT FIRST_NAME, LAST_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE LOCATION_ID = 1400;
+BEGIN
+    FOR I IN cur1 LOOP
+            -- If this is not the first iteration, add a comma before adding the next value
+        RETURN I.FIRST_NAME || ' ' || I.LAST_NAME; -- Concatenate FIRST_NAME and LAST_NAME
+    END LOOP;
+END;
+
+-- FOR LOOP - PRINT FIRST_NAME AND LAST_NAME OF ALL EMPLOYEES WHO ARE ALL WORKING IN THE LOCATION_ID 1400
+DECLARE
+    LV_RESULT STRING DEFAULT '';  -- Variable to accumulate results
+    cur1 CURSOR FOR
+        SELECT FIRST_NAME, LAST_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE LOCATION_ID = 1400;
+BEGIN
+    FOR I IN cur1 LOOP
+        -- If this is not the first iteration, add a comma before adding the next value
+        IF( LV_RESULT != '') THEN
+          LV_RESULT := LV_RESULT || ', ';
+        END IF;
+
+        -- Accumulate FIRST_NAME and LAST_NAME
+        LV_RESULT := LV_RESULT || I.FIRST_NAME || ' ' || I.LAST_NAME;
+    END LOOP;
+
+    -- Return the accumulated result after the loop finishes
+    RETURN LV_RESULT;
+END;
