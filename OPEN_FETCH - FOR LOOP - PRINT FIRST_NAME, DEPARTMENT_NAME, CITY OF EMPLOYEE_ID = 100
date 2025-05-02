@@ -1,1 +1,131 @@
+-- SELECT * FROM EMP_DEPART_COMBO;
+-- SELECT * FROM LOCATIONS;  -- CSV files from ORACLE
 
+-- recreate the table with proper columns
+-- ALTER TABLE LOCATION RENAME COLUMN C1 TO LOCATION_ID;
+-- ALTER TABLE LOCATION RENAME COLUMN C2 TO STREET_ADDRESS;
+-- ALTER TABLE LOCATION RENAME COLUMN C3 TO POSTAL_CODE;
+-- ALTER TABLE LOCATION RENAME COLUMN C4 TO CITY;
+-- ALTER TABLE LOCATION RENAME COLUMN C5 TO STATE_PROVINCE;
+-- ALTER TABLE LOCATION RENAME COLUMN C6 TO COUNTRY_ID;
+
+-- DROP TABLE IF EXISTS SNOWFLAKE_LEARNING_DB.PUBLIC.LOCATIONS;
+-- ALTER TABLE LOCATION RENAME TO LOCATIONS;
+
+-- remove first row
+--DELETE FROM LOCATIONS WHERE LOCATION_ID IN (SELECT LOCATION_ID FROM LOCATIONSLIMIT 1 );
+ 
+-- FULL OUTER JOIN -- includes all rows from both tables -- If there’s no matching LOCATION_ID in either edc or loc, the result will still include the row, filling in NULL for the non-matching side.
+SELECT
+    edc.EMPLOYEE_ID,
+    edc.FIRST_NAME,
+    edc.LAST_NAME,
+    edc.EMAIL,
+    edc.PHONE_NUMBER,
+    edc.HIRE_DATE,
+    edc.JOB_ID,
+    edc.SALARY,
+    edc.COMMISSION_PCT,
+    edc.EMPLOYEE_MANAGER_ID,
+    edc.DEPARTMENT_ID,
+    edc.DEPARTMENT_NAME,
+    edc.DEPARTMENT_MANAGER_ID,
+   -- edc.LOCATION_ID AS EDC_LOCATION_ID,
+   -- loc.LOCATION_ID AS LOC_LOCATION_ID,
+    COALESCE(edc.LOCATION_ID, loc.LOCATION_ID)::INT AS LOCATION_ID,  -- One unified LOCATION_ID
+    loc.STREET_ADDRESS,
+    loc.POSTAL_CODE,
+    loc.CITY,
+    loc.STATE_PROVINCE,
+    loc.COUNTRY_ID
+FROM EMP_DEPART_COMBO edc
+FULL OUTER JOIN LOCATIONS loc
+ON edc.LOCATION_ID = loc.LOCATION_ID;
+-- Why use FULL OUTER JOIN with COALESCE?
+-- This is useful in data warehousing or reporting contexts where:
+-- Some employees might not yet be assigned a location, but you still want to report them.
+-- Some locations may exist independently of employees, and you want to show them too.
+-- The use of COALESCE allows you to present a unified LOCATION_ID regardless of which side the value is coming from.
+
+-- create a combined table in Snowflake from your two tables (EMP_DEPART_COMBO and LOCATIONS)
+CREATE OR REPLACE TABLE EMP_LOC_COMBINED AS
+SELECT
+    edc.EMPLOYEE_ID,
+    edc.FIRST_NAME,
+    edc.LAST_NAME,
+    edc.EMAIL,
+    edc.PHONE_NUMBER,
+    edc.HIRE_DATE,
+    edc.JOB_ID,
+    edc.SALARY,
+    edc.COMMISSION_PCT,
+    edc.EMPLOYEE_MANAGER_ID,
+    edc.DEPARTMENT_ID,
+    edc.DEPARTMENT_NAME,
+    edc.DEPARTMENT_MANAGER_ID,
+    COALESCE(edc.LOCATION_ID, loc.LOCATION_ID)::INT AS LOCATION_ID,
+    loc.STREET_ADDRESS,
+    loc.POSTAL_CODE,
+    loc.CITY,
+    loc.STATE_PROVINCE,
+    loc.COUNTRY_ID
+FROM EMP_DEPART_COMBO edc
+FULL OUTER JOIN LOCATIONS loc
+  ON edc.LOCATION_ID = loc.LOCATION_ID;
+
+=========================================================================================================================================================
+
+SELECT * FROM EMP_LOC_COMBINED;
+
+-- SELECT FIRST_NAME, DEPARTMENT_NAME, CITY FROM EMP_LOC_COMBINED WHERE EMPLOYEE_ID = 100; 
+
+-- OPEN_FETCH - PRINT FIRST_NAME, DEPARTMENT_NAME, CITY OF EMPLOYEE_ID = 100
+DECLARE
+    CURSOR_EMP CURSOR FOR
+        SELECT FIRST_NAME, DEPARTMENT_NAME, CITY
+        FROM EMP_LOC_COMBINED
+        WHERE EMPLOYEE_ID = 100;
+
+    V_FIRST_NAME STRING;
+    V_DEPT_NAME STRING;
+    V_CITY STRING;
+
+BEGIN
+    OPEN CURSOR_EMP;
+    FETCH CURSOR_EMP INTO V_FIRST_NAME, V_DEPT_NAME, V_CITY;
+
+    -- Print (or RETURN) the result (Snowflake supports RETURN or using results in other logic)
+    -- Output the values with each on a new line
+   RETURN 'First Name: ' || V_FIRST_NAME || ',\n' ||
+           'Department: ' || V_DEPT_NAME || ',\n' ||
+           'City: ' || V_CITY;
+
+    CLOSE CURSOR_EMP;
+END;
+
+=========================================================================================================================================================
+-- FOR LOOP - PRINT FIRST_NAME, DEPARTMENT_NAME, CITY OF EMPLOYEE_ID = 100
+DECLARE
+    CURSOR_EMP CURSOR FOR
+        SELECT FIRST_NAME, DEPARTMENT_NAME, CITY
+        FROM EMP_LOC_COMBINED
+        WHERE EMPLOYEE_ID = 100;
+
+    V_FIRST_NAME VARCHAR;
+    V_DEPT_NAME VARCHAR;
+    V_CITY VARCHAR;
+BEGIN
+    -- FOR REC IN CURSOR_EMP LOOP
+        -- V_FIRST_NAME := REC.FIRST_NAME;
+        -- V_DEPT_NAME := REC.DEPARTMENT_NAME;
+        -- V_CITY := REC.CITY;
+         FOR I IN CURSOR_EMP LOOP
+        V_FIRST_NAME:= I.FIRST_NAME;
+        V_DEPT_NAME:= I.DEPARTMENT_NAME;
+        V_CITY:= I.CITY;
+
+        RETURN 'First Name: ' || V_FIRST_NAME || ',\n' ||
+               'Department: ' || V_DEPT_NAME || ',\n' ||
+               'City: ' || V_CITY;
+    END LOOP;
+END;
