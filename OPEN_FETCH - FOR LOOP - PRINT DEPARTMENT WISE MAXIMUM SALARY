@@ -1,1 +1,99 @@
+-- CSV files from ORACLE
+-- SELECT * FROM EMPLOYEES;
+-- SELECT * FROM DEPARTMENTS;
 
+-- LEFT JOIN is used to include all employees even if some don't belong to a department.
+-- Aliases like E and D make the query cleaner.
+-- Renamed MANAGER_ID from both tables to avoid confusion. 
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- create a combined table in Snowflake from your two tables (EMPLOYEES and DEPARTMENTS), you can use the CREATE TABLE AS SELECT (CTAS) syntax
+CREATE OR REPLACE TABLE EMP_DEPART_COMBO AS
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+=================================================================================================================================================================
+-- retrieves all columns and all rows from the EMP_DEPART_COMBO table or view.
+SELECT * FROM EMP_DEPART_COMBO ;
+
+-- SELECT DEPARTMENT_NAME, MAX(SALARY) AS MAX_SALARY FROM EMP_DEPART_COMBO GROUP BY DEPARTMENT_NAME; --12 rows 2 columns 24 cells
+
+
+-- SELECT DEPARTMENT_NAME, MAX(SALARY) AS MAX_SALARY
+-- FROM EMP_DEPART_COMBO
+-- GROUP BY DEPARTMENT_NAME
+-- ORDER BY MAX(SALARY) DESC
+-- FETCH FIRST 1 ROW ONLY;
+
+-- OPEN_FETCH - PRINT DEPARTMENT WISE MAXIMUM SALARY
+DECLARE
+    C6 CURSOR FOR
+        SELECT DEPARTMENT_NAME, MAX(SALARY) AS MAX_SALARY
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME;
+        LV_DEPT_NAME VARCHAR;
+        LV_SALARY NUMBER;
+BEGIN
+    OPEN C6;
+    FETCH C6 INTO LV_DEPT_NAME, LV_SALARY;
+CLOSE C6;
+RETURN 'Dept Name: ' || LV_DEPT_NAME || ',\n' ||
+        'Max Salary ' || LV_SALARY;
+END;
+
+=================================================================================================================================================================
+
+-- FOR LOOP - PRINT DEPARTMENT WISE MAXIMUM SALARY
+DECLARE
+    C6 CURSOR FOR
+        SELECT DEPARTMENT_NAME, MAX(SALARY) AS MAX_SALARY
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME;
+    LV_DEPT_NAME VARCHAR;
+        LV_SALARY NUMBER;
+BEGIN
+FOR I IN C6 LOOP
+LV_DEPT_NAME:=I.DEPARTMENT_NAME;
+LV_SALARY:=I.MAX_SALARY;
+RETURN 'Dept Name: ' || LV_DEPT_NAME || ',\n' ||
+        'Max Salary ' || LV_SALARY;END LOOP;
+END;
