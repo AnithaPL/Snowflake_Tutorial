@@ -1,1 +1,182 @@
+-- CSV files from ORACLE
+-- SELECT * FROM EMPLOYEES;
+-- SELECT * FROM DEPARTMENTS;
+
+-- LEFT JOIN is used to include all employees even if some don't belong to a department.
+-- Aliases like E and D make the query cleaner.
+-- Renamed MANAGER_ID from both tables to avoid confusion. 
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- create a combined table in Snowflake from your two tables (EMPLOYEES and DEPARTMENTS), you can use the CREATE TABLE AS SELECT (CTAS) syntax
+CREATE OR REPLACE TABLE EMP_DEPART_COMBO AS
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- retrieves all columns and all rows from the EMP_DEPART_COMBO table or view.
+SELECT * FROM EMP_DEPART_COMBO ;
+
+--4 rows 1 column 4 cells(first cell is null)
+-- SELECT DEPARTMENT_NAME FROM EMP_DEPART_COMBO GROUP BY DEPARTMENT_NAME HAVING COUNT(*) = 1;
+
+-- 3 rows 1 column 3 cells
+SELECT DEPARTMENT_NAME
+FROM EMP_DEPART_COMBO
+WHERE DEPARTMENT_NAME IS NOT NULL
+GROUP BY DEPARTMENT_NAME
+HAVING COUNT(*) = 1;
+
+============================================================================================================================================================================
+-- OPEN/FETCH - PRINT DEPARTMENT_NAME (First Depart Name) WHICH ARE HAVING ONLY ONE EMPLOYEE
+DECLARE
+    cur3 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) = 1;
+    LV_DEPT_NAME VARCHAR;
+BEGIN
+    OPEN cur3;
+    FETCH cur3 INTO LV_DEPT_NAME;
+    CLOSE cur3;
+    RETURN LV_DEPT_NAME;
+END;
+
+============================================================================================================================================================================
+
+-- OPEN/FETCH - PRINT DEPARTMENT_NAME (First Depart Name) WHICH ARE HAVING ONLY ONE EMPLOYEE (SKIP NULL)
+DECLARE
+    cur3 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE DEPARTMENT_NAME IS NOT NULL
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) = 1;
+    LV_DEPT_NAME VARCHAR;
+BEGIN
+    OPEN cur3;
+    FETCH cur3 INTO LV_DEPT_NAME;
+    CLOSE cur3;
+    RETURN LV_DEPT_NAME;
+END;
+
+============================================================================================================================================================================
+
+-- OPEN/FETCH - PRINT DEPARTMENT_NAME (All) WHICH ARE HAVING ONLY ONE EMPLOYEE
+DECLARE
+    cur3 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) = 1;  -- Get departments with exactly one employee
+    LV_DEPT_NAME VARCHAR;
+    LV_RESULT VARCHAR DEFAULT '';
+BEGIN
+    OPEN cur3;
+    FETCH cur3 INTO LV_DEPT_NAME;
+
+    -- Check if the first department name is NULL, if so skip it and continue
+    WHILE (TRUE) DO
+        IF (LV_DEPT_NAME IS NULL) THEN
+            FETCH cur3 INTO LV_DEPT_NAME; -- Skip this NULL and fetch the next row
+            CONTINUE;  -- Skip to the next iteration if the department name is NULL
+        END IF;
+
+        IF (LV_RESULT != '') THEN
+            LV_RESULT := LV_RESULT || ', ' || CHR(10);
+        END IF;
+        LV_RESULT := LV_RESULT || LV_DEPT_NAME;
+
+        FETCH cur3 INTO LV_DEPT_NAME; -- Fetch next department name
+        IF (LV_DEPT_NAME IS NULL) THEN
+            EXIT;  -- Exit when no more rows are available
+        END IF;
+    END WHILE;
+    CLOSE cur3;
+    RETURN LV_RESULT;
+END;
+
+============================================================================================================================================================================
+-- FOR LOOP - PRINT DEPARTMENT_NAME (First Depart Name) WHICH ARE HAVING ONLY ONE EMPLOYEE
+DECLARE
+    cur3 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) = 1;
+BEGIN
+    FOR I IN cur3 LOOP
+        RETURN I.DEPARTMENT_NAME;
+    END LOOP;
+END;
+
+============================================================================================================================================================================
+
+-- FOR LOOP - PRINT DEPARTMENT_NAME (First Depart Name) WHICH ARE HAVING ONLY ONE EMPLOYEE (SKIP NULL)
+DECLARE
+    cur3 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE DEPARTMENT_NAME IS NOT NULL
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) = 1;
+BEGIN
+    FOR I IN cur3 LOOP
+        RETURN I.DEPARTMENT_NAME;  -- The first non-null department name
+    END LOOP;
+END;
+
+============================================================================================================================================================================
+
+-- FOR LOOP - PRINT DEPARTMENT_NAME (All) WHICH ARE HAVING ONLY ONE EMPLOYEE
+DECLARE
+    cur3 CURSOR FOR
+        SELECT DEPARTMENT_NAME
+        FROM EMP_DEPART_COMBO
+        WHERE DEPARTMENT_NAME IS NOT NULL
+        GROUP BY DEPARTMENT_NAME
+        HAVING COUNT(*) = 1;
+BEGIN
+FOR I IN cur3 LOOP
+RETURN I.DEPARTMENT_NAME;
+END LOOP;
+END;
 
