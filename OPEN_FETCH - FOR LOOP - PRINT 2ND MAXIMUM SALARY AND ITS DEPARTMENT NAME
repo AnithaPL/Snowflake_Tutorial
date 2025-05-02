@@ -1,1 +1,101 @@
 
+-- CSV files from ORACLE
+-- SELECT * FROM EMPLOYEES;
+-- SELECT * FROM DEPARTMENTS;
+
+-- LEFT JOIN is used to include all employees even if some don't belong to a department.
+-- Aliases like E and D make the query cleaner.
+-- Renamed MANAGER_ID from both tables to avoid confusion. 
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+
+-- create a combined table in Snowflake from your two tables (EMPLOYEES and DEPARTMENTS), you can use the CREATE TABLE AS SELECT (CTAS) syntax
+CREATE OR REPLACE TABLE EMP_DEPART_COMBO AS
+SELECT 
+    E.EMPLOYEE_ID,
+    E.FIRST_NAME,
+    E.LAST_NAME,
+    E.EMAIL,
+    E.PHONE_NUMBER,
+    E.HIRE_DATE,
+    E.JOB_ID,
+    E.SALARY,
+    E.COMMISSION_PCT,
+    E.MANAGER_ID AS EMPLOYEE_MANAGER_ID,
+    E.DEPARTMENT_ID,
+    D.DEPARTMENT_NAME,
+    D.MANAGER_ID AS DEPARTMENT_MANAGER_ID,
+    D.LOCATION_ID
+FROM 
+    EMPLOYEES E
+LEFT JOIN 
+    DEPARTMENTS D
+ON 
+    E.DEPARTMENT_ID = D.DEPARTMENT_ID;
+=====================================================================================================================================================
+-- retrieves all columns and all rows from the EMP_DEPART_COMBO table or view.
+SELECT * FROM EMP_DEPART_COMBO ;
+
+-- SELECT SALARY, DEPARTMENT_NAME FROM (
+--     --Subquery
+--     SELECT SALARY, DEPARTMENT_NAME,
+--     ROW_NUMBER() OVER (ORDER BY SALARY DESC) AS RANK
+--     FROM EMP_DEPART_COMBO) 
+--     AS ranked_salaries
+--     WHERE RANK = 2;
+
+-- OPEN/FETCH - PRINT 2ND MAXIMUM SALARY AND ITS DEPARTMENT NAME
+DECLARE
+    C6 CURSOR FOR
+            SELECT SALARY, DEPARTMENT_NAME,
+            FROM EMP_DEPART_COMBO
+            ORDER BY SALARY DESC
+                    OFFSET 1 ROWS FETCH NEXT 1 ROW ONLY; 
+    LV_SALARY NUMBER;
+    LV_DEPT_NAME VARCHAR;
+BEGIN
+    OPEN C6;
+    FETCH C6 INTO LV_SALARY, LV_DEPT_NAME;
+CLOSE C6;
+RETURN '2nd Max Salary: ' || LV_SALARY || ',\n' ||
+        'Dept Name ' || LV_DEPT_NAME;
+END;
+
+=====================================================================================================================================================
+
+-- FOR LOOP - PRINT 2ND MAXIMUM SALARY AND ITS DEPARTMENT NAME
+DECLARE
+    C6 CURSOR FOR
+            SELECT SALARY, DEPARTMENT_NAME,
+            FROM EMP_DEPART_COMBO
+            ORDER BY SALARY DESC
+                    OFFSET 1 ROWS FETCH NEXT 1 ROW ONLY; 
+    LV_SALARY NUMBER;
+    LV_DEPT_NAME VARCHAR;
+BEGIN
+FOR I IN C6 LOOP
+LV_SALARY:= I.SALARY;
+LV_DEPT_NAME:=I.DEPARTMENT_NAME;
+RETURN '2nd Max Salary: ' || LV_SALARY || ',\n' ||
+        'Dept Name ' || LV_DEPT_NAME;
+END LOOP;
+END;
