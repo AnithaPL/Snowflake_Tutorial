@@ -1,0 +1,113 @@
+-- "String Manipulation and Conditional Logic in SQL"
+-- Simulating numeric functions (CEIL, FLOOR, ROUND)
+
+-- FIND THE CEIL VALUE OF 10.6 WITHOUT USING CEIL FUNCTION (Expected: 11)
+DECLARE
+    C1 CURSOR FOR
+    SELECT SUBSTR('10.6',1,POSITION('.' IN '10.6')-1) FROM DUAL;
+    LV_VALUE NUMBER;
+BEGIN
+OPEN C1;
+FETCH C1 INTO LV_VALUE;
+CLOSE C1;
+RETURN LV_VALUE + 1;
+END;
+
+-- Explanation:
+-- SUBSTR('10.6', 1, POSITION('.') - 1) extracts the integer part before the decimal → '10'
+-- LV_VALUE stores that as a number → 10
+-- Adding +1 gives 11 (mimics CEIL)
+-- ⚠️ Note: This assumes the number is not already an integer (e.g., for 10.0, this would wrongly return 11)
+
+
+
+-- FIND THE FLOOR VALUE OF 10.6 WITHOUT USING FLOOR FUNCTION  (Expected: 10)
+DECLARE
+    C1 CURSOR FOR
+    SELECT SUBSTR('10.6',1,POSITION('.' IN '10.6')-1) FROM DUAL;
+    LV_VALUE NUMBER;
+BEGIN
+OPEN C1;
+FETCH C1 INTO LV_VALUE;
+CLOSE C1;
+RETURN LV_VALUE ;
+END;
+-- 💡 Explanation:
+-- Same extraction of '10' before the decimal
+-- Just return the integer part → 10 (correct for FLOOR)
+
+-- FIND THE ROUND VALUES OF 10.6 , 10.4 WITHOUT USING ROUND FUNCTION 
+-- ROUND for 10.6 (Expected: 11)
+DECLARE
+    C1 CURSOR FOR
+    SELECT 
+        SUBSTR('10.6', 1, POSITION('.' IN '10.6') - 1) AS int_part,
+        SUBSTR('10.6', POSITION('.' IN '10.6') + 1) AS dec_part
+    FROM DUAL;
+    
+    LV_INT NUMBER;
+    LV_DEC NUMBER;
+    
+BEGIN
+    OPEN C1;
+    FETCH C1 INTO LV_INT, LV_DEC;
+    CLOSE C1;
+
+    IF ( LV_DEC >= 5 ) THEN
+        RETURN LV_INT + 1;
+    ELSE
+        RETURN LV_INT;
+    END IF;
+END;
+-- 💡 Explanation:
+-- Extracts both integer part '10' and decimal part '6'
+-- Converts both to numbers: LV_INT = 10, LV_DEC = 6
+-- Since 6 >= 5, returns 10 + 1 = 11 → correct ROUND behavior
+
+-- ROUND for 10.4 (Expected: 10)
+DECLARE
+    C1 CURSOR FOR
+    SELECT 
+        SUBSTR('10.4', 1, POSITION('.' IN '10.4') - 1) AS int_part,
+        SUBSTR('10.4', POSITION('.' IN '10.4') + 1) AS dec_part
+    FROM DUAL;
+
+    LV_INT NUMBER;
+    LV_DEC NUMBER;
+BEGIN
+    OPEN C1;
+    FETCH C1 INTO LV_INT, LV_DEC;
+    CLOSE C1;
+
+    IF ( LV_DEC >= 5 ) THEN
+        RETURN LV_INT + 1;
+    ELSE
+        RETURN LV_INT;
+    END IF;
+END;
+-- 💡 Explanation:
+-- Same logic as above
+-- Decimal part is '4' → less than 5
+-- Returns LV_INT = 10 → correct ROUND behavior
+
+
+-- 🔧 Suggested Improvements:
+-- Avoid hardcoding strings like '10.6' — pass them as parameters or variables.
+-- For CEIL, check if the decimal part is 0 to avoid adding 1 unnecessarily.
+-- This can be done more elegantly using TRUNC() and comparisons.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
