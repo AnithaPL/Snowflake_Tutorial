@@ -80,14 +80,14 @@ BEGIN
     -- Validate EB_ID 
     SELECT COUNT(*) INTO LV_EXISTS
     FROM CUSTOMER_CONN_DTLS
-    WHERE EB_NO = P_EB_ID;
+    WHERE EB_NO = :P_EB_ID;
 
     IF (LV_EXISTS = 0) THEN
         RETURN 'INVALID EB_ID';
     END IF;
 
     -- Open cursor with parameter binding
-    OPEN CURSOR_BILLING_DTLS USING (P_EB_ID, P_EB_ID);
+    OPEN CURSOR_BILLING_DTLS USING (:P_EB_ID, :P_EB_ID);
     FETCH CURSOR_BILLING_DTLS INTO LV_CUST_ID, LV_LAST_MONTH_UNIT, LV_BILL_DT;
     CLOSE CURSOR_BILLING_DTLS;
 
@@ -108,14 +108,14 @@ BEGIN
         TARIFF, BILL_AMT
     )
     VALUES (
-        LV_NEW_BILL_NO, 
+        :LV_NEW_BILL_NO, 
         CURRENT_DATE, 
-        LV_CUST_ID, 
-        P_EB_ID,
-        LV_LAST_MONTH_UNIT, 
-        P_CURR_MONTH_UNIT,
-        P_TARIFF,
-        LV_BILL_AMT
+        :LV_CUST_ID, 
+        :P_EB_ID,
+        :LV_LAST_MONTH_UNIT, 
+        :P_CURR_MONTH_UNIT,
+        :P_TARIFF,
+        :LV_BILL_AMT
     );
 
     RETURN 'SUCCESS: BILL INSERTED';
